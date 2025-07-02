@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DBSCAN Visualization</title>
+  <style>
+    canvas { border: 2px solid black; }
+    body { text-align: center; font-family: sans-serif; }
+    #frameImg { border: 2px solid gray; margin-top: 20px; }
+    input { margin: 5px; padding: 4px; }
+  </style>
+</head>
+<body>
+
+<h2>Click on canvas to add points</h2>
+<canvas id="canvas" width="400" height="400"></canvas>
+<br>
+
+<input type="number" id="epsilon" placeholder="Epsilon (e.g., 50)" />
+<input type="number" id="minPts" placeholder="MinPts (e.g., 3)" />
+<br>
+<button onclick="startAnimation()">Visualize DBSCAN</button>
+
+<br><br>
+<img id="frameImg" width="400" height="400">
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  let points = [];
+
+  canvas.addEventListener("click", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round(e.clientX - rect.left);
+    const y = Math.round(e.clientY - rect.top);
+    points.push({x, y});
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = "black";
+    ctx.fill();
+  });
+
+  function startAnimation() {
+    const epsilon = parseFloat(document.getElementById("epsilon").value);
+    const minPts = parseInt(document.getElementById("minPts").value);
+
+    if (isNaN(epsilon) || isNaN(minPts)) {
+      alert("Please enter valid epsilon and minPts values");
+      return;
+    }
+
+    fetch("/generate_frames/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        points,
+        epsilon,
+        minPts
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const frameCount = data.frames;
+      let current = 0;
+      const interval = setInterval(() => {
+        document.getElementById("frameImg").src = `/media/frames/frame_${current}.png?${Date.now()}`;
+        current++;
+        if (current >= frameCount) clearInterval(interval);
+      }, 300);
+    });
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+</body>
+</html>
