@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <title>DBSCAN Visualizer</title>
+    <link rel="stylesheet" href="{% static 'visualize/style.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1 class="main-heading ">DBSCAN Clustering Algorithm</h1>
+        <div class="nav-right">
+            <a href="/" class="nav-btn">Home</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="section-heading">Introduction 
+            <button id="toggleBtn" class="dropdown-btn">▼</button>
+        </h2>
+        <div id="introContent" class="hidden intro-text poppins-medium ">
+            {{ introduction }}
+        </div>
+    </div>
+    {% block body %}
+    {% endblock %}
+    <script>
+        const toggleBtn = document.getElementById("toggleBtn");
+        const introContent = document.getElementById("introContent");
+
+        toggleBtn.addEventListener("click", () => {
+            introContent.classList.toggle("hidden");
+            toggleBtn.innerText = introContent.classList.contains("hidden") ? "▼" : "▲";
+        });
+    </script>
+</body>
+</html>

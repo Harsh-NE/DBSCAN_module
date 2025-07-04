@@ -1,0 +1,38 @@
+DBSCAN stands for Density-Based Spatial Clustering of Applications with Noise. It’s a density-based clustering algorithm that groups data points that are close to each other based on a distance measurement and a minimum number of points.
+Unlike algorithms like K-Means, DBSCAN does not require you to specify the number of clusters in advance. It can also identify noise points (outliers) that don’t belong to any cluster.
+
+The Key Parameters: Epsilon and MinPts
+
+DBSCAN requires two key parameters:
+    Epsilon (ε): The radius of the neighborhood around a point. This defines how close points need to be to each other to be considered part of a cluster.
+    MinPts: The minimum number of points required within the epsilon radius for a point to be considered a core point.
+Using these two parameters, DBSCAN classifies each point into one of the following:
+    Core Point: Has at least MinPts neighbors within ε.
+    Border Point: Has fewer than MinPts neighbors but is in the neighborhood of a core point.
+    Noise Point (Outlier): Neither a core point nor a border point.
+
+How DBSCAN Works
+1.Pick an unvisited point.
+2.Check its neighborhood (within distance ε).
+3.If it has at least MinPts neighbors, it's a core point, and a new cluster is started.
+4.The algorithm then recursively visits all neighbors of that core point, expanding the cluster.
+5.If a point is within ε of a core point but doesn't itself have enough neighbors, it's labeled as a border point.
+6.Points that are not reachable from any cluster are marked as noise.
+7.This process continues until all points have been visited and either assigned to a cluster or marked as noise.
+
+Limitations
+Sensitive to the values of ε and MinPts. Poor choice of parameters can lead to misleading results.
+Struggles with datasets where clusters have varying densities.
+Not well-suited for very high-dimensional data, where the concept of “distance” becomes less meaningful.
+
+When Should You Use DBSCAN?
+DBSCAN is a great choice when:
+You want to find clusters without specifying their number.
+You expect irregular cluster shapes.
+You want to detect outliers in your data.
+Your data is spatial or has a natural density structure.
+It’s commonly used in applications like geospatial analysis (e.g., grouping nearby locations), anomaly detection, and image segmentation.
+
+Conclusion
+DBSCAN is a powerful clustering algorithm that works by identifying dense regions of data. It is especially useful in scenarios where cluster shape and size are unpredictable, and where noise or outliers need to be handled explicitly. While it does require tuning of parameters, its ability to find complex structures in data makes it a valuable tool in the machine learning toolbox.
+If you’re building a data visualization or an interactive tool, DBSCAN is a great candidate to show clustering in action.

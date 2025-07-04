@@ -1,28 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>DBSCAN Visualization</title>
-  <style>
-    canvas { border: 2px solid black; }
-    body { text-align: center; font-family: sans-serif; }
-    #frameImg { border: 2px solid gray; margin-top: 20px; }
-    input { margin: 5px; padding: 4px; }
-  </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-<h2>Click on canvas to add points</h2>
-<canvas id="canvas" width="400" height="400"></canvas>
-<br>
+{% block body %}
+<h2 class="title">Visualize it Yourself!!!</h2>
+<div style="display: flex; justify-content:space-around ">
+<div class="canvas-controls-container">
+  <canvas id="canvas" width="400" height="400"></canvas>
+  <div class="param-inputs">
+    <input type="number" id="epsilon" placeholder="Epsilon (e.g., 50)" />
+    <input type="number" id="minPts" placeholder="MinPts (e.g., 3)" />
+    <button onclick="startAnimation()">Visualize DBSCAN</button>
+  </div>
+</div>
 
-<input type="number" id="epsilon" placeholder="Epsilon (e.g., 50)" />
-<input type="number" id="minPts" placeholder="MinPts (e.g., 3)" />
-<br>
-<button onclick="startAnimation()">Visualize DBSCAN</button>
-
-<br><br>
 <img id="frameImg" width="400" height="400">
-
+</div>
 <script>
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
@@ -48,7 +40,7 @@
       return;
     }
 
-    fetch("/generate_frames/", {
+    fetch("{% url 'generate_video' %}", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -87,6 +79,4 @@
     return cookieValue;
   }
 </script>
-
-</body>
-</html>
+{% endblock %}
