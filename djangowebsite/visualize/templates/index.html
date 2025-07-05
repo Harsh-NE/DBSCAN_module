@@ -3,80 +3,186 @@
 
 {% block body %}
 <h2 class="title">Visualize it Yourself!!!</h2>
-<div style="display: flex; justify-content:space-around ">
-<div class="canvas-controls-container">
-  <canvas id="canvas" width="400" height="400"></canvas>
-  <div class="param-inputs">
-    <input type="number" id="epsilon" placeholder="Epsilon (e.g., 50)" />
-    <input type="number" id="minPts" placeholder="MinPts (e.g., 3)" />
-    <button onclick="startAnimation()">Visualize DBSCAN</button>
+<div class="main-container">
+  <div class="canvas-controls-container">
+    <div id="canvas-with-color" class="canvas-color-container">
+      <canvas id="canvas" width="512" height="512"></canvas>
+      <div class="param-inputs">
+        <label for="color">Color</label>
+        <select id="color">
+          <option value="red">Red</option>
+          <option value="blue">Blue</option>
+          <option value="yellow">Yellow</option>
+          <option value="pink">Pink</option>
+          <option value="green">Green</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sliders" style="display:flex">
+      <div class="param-inputs">
+        <label for="epsilon">Epsilon</label>
+        <input type="range" min="0.1" max="1.98" step="0.01" value="0.5" id="epsilon">
+        <div class="range-label">0.10-1.98</div>
+
+        <label for="minPts">MinPts</label>
+        <input type="range" min="1" max="10" step="1" value="3" id="minPts">
+        <div class="range-label">1-10</div>
+      </div>
+      <div class="playback-controls">
+        <button id="clearCanvas" title=clear>
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-eraser-fill" viewBox="0 0 16 16">
+          <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm.66 11.34L3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/>
+          </svg>
+        </button>
+        <button id="playPauseBtn" title="Play/Pause">
+          <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#004aad" viewBox="0 0 16 16">
+            <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"/>
+          </svg>
+          <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#004aad" viewBox="0 0 16 16" style="display: none;">
+            <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/>
+          </svg>
+        </button>
+
+        <button id="repeatBtn" title="Repeat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#004aad" viewBox="0 0 16 16">
+            <path d="M11 5.466V4H5a4 4 0 0 0-3.584 5.777.5.5 0 1 1-.896.446A5 5 0 0 1 5 3h6V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m3.81.086a.5.5 0 0 1 .67.225A5 5 0 0 1 11 13H5v1.466a.25.25 0 0 1-.41.192l-2.36-1.966a.25.25 0 0 1 0-.384l2.36-1.966a.25.25 0 0 1 .41.192V12h6a4 4 0 0 0 3.585-5.777.5.5 0 0 1 .225-.67Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="video-panel">
+    <img id="frameImg" width="512" height="512" alt="Visualize">
   </div>
 </div>
 
-<img id="frameImg" width="400" height="400">
-</div>
 <script>
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  let points = [];
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+let points = [];
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.round(e.clientX - rect.left);
+  const y = Math.round(e.clientY - rect.top);
+  points.push({ x, y });
+  ctx.beginPath();
+  ctx.arc(x, y, 5, 0, 2 * Math.PI);
+  ctx.fillStyle = "black";
+  ctx.fill();
+});
 
-  canvas.addEventListener("click", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.round(e.clientX - rect.left);
-    const y = Math.round(e.clientY - rect.top);
-    points.push({x, y});
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = "black";
-    ctx.fill();
-  });
+let isPlaying = false;
+let currentFrame = 0;
+let frameCount = 0;
+let intervalId = null;
 
-  function startAnimation() {
-    const epsilon = parseFloat(document.getElementById("epsilon").value);
-    const minPts = parseInt(document.getElementById("minPts").value);
+function updateButton() {
+  const playIcon = document.getElementById("playIcon");
+  const pauseIcon = document.getElementById("pauseIcon");
 
-    if (isNaN(epsilon) || isNaN(minPts)) {
-      alert("Please enter valid epsilon and minPts values");
-      return;
-    }
+  if (isPlaying) {
+    playIcon.style.display = "none";
+    pauseIcon.style.display = "inline";
+  } else {
+    playIcon.style.display = "inline";
+    pauseIcon.style.display = "none";
+  }
+}
 
-    fetch("{% url 'generate_video' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        points,
-        epsilon,
-        minPts
-      })
-    })
+document.getElementById("playPauseBtn").addEventListener("click", () => {
+  isPlaying = !isPlaying;
+  updateButton();
+  if (isPlaying) {
+    startAnimation();
+  } else {
+    clearInterval(intervalId);
+  }
+});
+
+document.getElementById("repeatBtn").addEventListener("click", () => {
+  currentFrame = 0;
+  if (!isPlaying) {
+    isPlaying = true;
+    updateButton();
+    startAnimation();
+  }
+});
+
+function startAnimation() {
+  const epsilon = parseFloat(document.getElementById("epsilon").value) * 100;
+  const minPts = parseInt(document.getElementById("minPts").value);
+  const color = document.getElementById("color").value;
+
+  if (isNaN(epsilon) || isNaN(minPts)) {
+    alert("Please enter valid epsilon and minPts values");
+    return;
+  }
+
+  fetch("{% url 'generate_video' %}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({ points, epsilon, minPts })
+  })
     .then(response => response.json())
     .then(data => {
-      const frameCount = data.frames;
-      let current = 0;
-      const interval = setInterval(() => {
-        document.getElementById("frameImg").src = `/media/frames/frame_${current}.png?${Date.now()}`;
-        current++;
-        if (current >= frameCount) clearInterval(interval);
+      frameCount = data.frames;
+      currentFrame = 0;
+
+      intervalId = setInterval(() => {
+        if (!isPlaying || currentFrame >= frameCount) {
+          clearInterval(intervalId);
+          isPlaying = false;
+          updateButton();
+          return;
+        }
+        document.getElementById("frameImg").src = `/media/frames/frame_${currentFrame}.png?${Date.now()}`;
+        currentFrame++;
       }, 300);
     });
-  }
+}
 
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + '=')) {
-          cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
-          break;
-        }
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+        break;
       }
     }
-    return cookieValue;
   }
+  return cookieValue;
+}
+document.getElementById("clearCanvas").addEventListener("click", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  points = [];
+
+  // Reset play/pause and frame display
+  isPlaying = false;
+  clearInterval(intervalId);
+  currentFrame = 0;
+  updateButton();
+
+  // Reset output image
+  document.getElementById("frameImg").src = "";
+  
+  // Optionally: delete previous server-side images
+  fetch("{% url 'generate_video' %}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({ points: [], epsilon: 0, minPts: 0 })  // dummy call to clear server folder
+  });
+});
+
 </script>
 {% endblock %}

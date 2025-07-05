@@ -26,6 +26,7 @@ def euclidean_dist(p1, p2):
 @csrf_exempt
 def generate_frames(request):
     frame_dir = "media/frames"
+    
     if os.path.exists(frame_dir):
         for f in os.listdir(frame_dir):
             os.remove(os.path.join(frame_dir, f))
@@ -34,6 +35,13 @@ def generate_frames(request):
 
     body = json.loads(request.body)
     points = body["points"]
+    if not body["points"]:
+        # Clear frames if empty input
+        if os.path.exists(frame_dir):
+            for f in os.listdir(frame_dir):
+                os.remove(os.path.join(frame_dir, f))
+        return JsonResponse({"frames": 0})
+
     epsilon = float(body["epsilon"])
     minPts = int(body["minPts"])
 
@@ -49,32 +57,40 @@ def generate_frames(request):
     point_colors = ['black'] * length
     frame_count = 0
 
-    def save_frame(title, highlight_idx=None, circle_indices=None):
+    def save_frame(_, highlight_idx=None, circle_indices=None):
         nonlocal frame_count
-        plt.figure(figsize=(5, 5))
-        plt.scatter(df['x'], df['y'], s=40, c=point_colors)
-        ax = plt.gca()
+
+        # 512px = 5.12 inches * 100 DPI
+        fig, ax = plt.subplots(figsize=(5.12, 5.12), dpi=100)
+
+        # Set fixed limits and aspect ratio
+        ax.set_xlim(0, 512)
+        ax.set_ylim(0, 512)
+        ax.set_aspect('equal')
+        ax.invert_yaxis()
+
+        # Hide axes and remove margins
+        ax.axis('off')
+        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+        # Plot main points
+        ax.scatter(df['x'], df['y'], s=40, c=point_colors)
 
         if highlight_idx is not None:
-            selected = df.iloc[highlight_idx]
-            plt.scatter(selected['x'], selected['y'], facecolors='none', edgecolors='yellow', s=300, linewidths=2)
-            circ = plt.Circle((selected['x'], selected['y']), epsilon, color='yellow', fill=False, linestyle='--')
-            ax.add_patch(circ)
+            pt = df.iloc[highlight_idx]
+            ax.scatter(pt['x'], pt['y'], s=300, facecolors='none', edgecolors='yellow', linewidths=2)
+            ax.add_patch(plt.Circle((pt['x'], pt['y']), epsilon, color='yellow', fill=False, linestyle='--'))
 
         if circle_indices:
             for idx in circle_indices:
                 pt = df.iloc[idx]
-                circ = plt.Circle((pt['x'], pt['y']), epsilon, color='gray', fill=False, linestyle=':')
-                ax.add_patch(circ)
+                ax.add_patch(plt.Circle((pt['x'], pt['y']), epsilon, color='gray', fill=False, linestyle=':'))
 
-        plt.title(title)
-        plt.xlim(0, 400)
-        plt.ylim(0, 400)
-        ax.set_aspect('equal')
-        plt.gca().invert_yaxis()
-        plt.savefig(f'{frame_dir}/frame_{frame_count}.png')
-        plt.close()
+        # Save as 512x512 PNG exactly
+        fig.savefig(f'{frame_dir}/frame_{frame_count}.png', dpi=100, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
         frame_count += 1
+
 
     while unvisited_index:
         random_point_index = randint(0, len(unvisited_index) - 1)
