@@ -16,3 +16,5 @@ python -m venv venv
 source venv\Scripts\activate
 ## Install dependencies
 pip install -r requirements.txt
+## view the website
+python manage.py runserver
