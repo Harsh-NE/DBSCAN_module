@@ -5,7 +5,7 @@ A web-based tool to visualize how the DBSCAN clustering algorithm works step-by-
 ## How to Use 
 
 ## Clone the repo
-git clone git@github.com:Harsh-NE/DBSCAN_module.git
+git clone https://github.com/Harsh-NE/DBSCAN_module.git
 
 
 cd DBSCAN_module/djangowebsite
